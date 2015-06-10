@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!DOCTYPE project>
+
+<project name="GappsKitchen" basedir="." default="buildAll">
+	
+	<description>
+    This file list used by ant to build the Gapps project
+  </description>
+  
+  <target name="buildAll" depends="init,plugins,cleanup" description="execute complete build" />
+  
+  <target name ="init" depends="cleanup" description="initiating steps">
+
+  	<mkdir dir="WORKING" />
+  	<mkdir dir="OUTPUT_ZIP" />
+  	<mkdir dir=".tmp" />
+  	
+  	<propertyfile file="stats.properties">
+  		<entry key="PRODUCT_VERSION_MAINTENANCE" type="int" default="000" operation="+" pattern="000"/>
+  	</propertyfile>
+ 
+  </target>
+  
+  <target name ="plugins" description="create tasks">
+  
+	<echo message="Create tasks" />
+	
+  	<script language="javascript"> <![CDATA[
+  	// importPackage(java.io);
+   importClass(java.io.File);
+   
+   var addons = "build-tools" + File.separator + "add-ons";	
+      	
+  	// Create a <fileset dir="" includes=""/>
+  	fs = project.createDataType("fileset");
+  	fs.setDir( new File(basedir, addons) );
+	fs.setIncludes("*-build.xml");
+	
+  	// Get the files (array) of that fileset
+  	ds = fs.getDirectoryScanner(project);
+  	srcFiles = ds.getIncludedFiles();
+  	
+  	// Create a <antcall target="" />
+  	mTask = project.createTask("ant");
+  	
+  	for (i=0; i<srcFiles.length; i++) {
+  		mTask.setAntfile(new File(basedir, addons + File.separator + srcFiles[i]));
+  		mTask.perform();  	
+  	}
+
+  	]]></script>
+  	
+  </target>
+  
+  <target name="cleanup" description="delete unnecessary build files">
+
+  	<echo message="Cleaning up"/>
+  	
+  	<delete dir="WORKING"/>
+  	<delete dir=".tmp"/>
+
+  </target>
+  
+</project>
