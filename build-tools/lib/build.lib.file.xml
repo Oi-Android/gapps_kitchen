@@ -1,0 +1,116 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!DOCTYPE project>
+
+<!-- include: <include file="${lib.dir}/build.lib.file.xml" optional="true" as="lfs" /> -->
+
+<project name="_file">	
+	
+	<import file="${build.dir}/tools/tools.utils.xml" optional="true" />
+	
+	<!-- applications folder(for arm64):
+			if true then
+			out = arm + arm64
+			else
+			out = arm64	-->
+	<property name="apps.ext.multi-" value="false"/>
+	
+	<!-- a list of core files -->		
+	
+	<target name="coreListCheck">
+		<property name="file.core.list" value="${temp.dir}/core.list"/>
+		<available file="${file.core.list}" property="core.list.present"/>
+	</target>
+	
+	<target name="coreListLoad" if="core.list.present">
+	
+   	<loadresource property="core.list"> <file file="${temp.dir}/core.list" /> </loadresource>
+   	<copy todir="${work.dir}/system/">
+			<fileset dir="${struct.dir}/Core" />
+		</copy>
+		 
+	</target>
+	
+	<target name="addCoreApps" depends="coreListCheck,coreListLoad" unless="core.list.present">
+	
+		<copy todir="${work.dir}/system/">
+			<fileset id="item.list" dir="${struct.dir}/Core" />
+		</copy> 
+		
+		<pathconvert refid="item.list" property="core.list" pathsep="&#10;">
+			<map from="${struct.dir}/Core/" to=''/>
+		</pathconvert>
+		
+		<concat destfile="${temp.dir}/core.list">&#10;${core.list}</concat>
+	
+	</target>
+		
+	<target name="appsExtCheck">
+		<property name="file.appsExt.list" value="${temp.dir}/out/"/>
+		<available file="${file.appsExt.list}" type="dir" property="appsExt.list.present"/>
+		
+		<condition property="isConfigJB5">
+   		<and>
+         	<equals arg1="${ARCH}" arg2="arm64"/>
+         	<istrue value="${apps.ext.multi-}"/>
+      	</and>
+      </condition>
+      
+	</target>
+	
+	<target name="JB5RunMulti" if="isConfigJB5">
+	
+		<copy todir="${work.dir}/system/">
+			<fileset dir="${temp.dir}/out/arm" />
+			<fileset dir="${temp.dir}/out/arm64" />
+		</copy>
+		<loadresource property="apps.ext.list.arm"> <file file="${temp.dir}/appsext.arm.list" /> </loadresource>
+   	<loadresource property="apps.ext.list.arm64"> <file file="${temp.dir}/appsext.arm64.list" /> </loadresource>
+		<property name="apps.ext.list" value="${apps.ext.list.arm}${apps.ext.list.arm64}" />
+		
+	</target>
+
+	<target name="JB5Run" unless="isConfigJB5">
+	
+		<copy todir="${work.dir}/system/">
+			<fileset dir="${temp.dir}/out/${ARCH}" />
+		</copy>	
+		<loadresource property="apps.ext.list"> <file file="${temp.dir}/appsext.${ARCH}.list" /> </loadresource>	
+		
+	</target>
+	
+	<target name="addExtApps" depends="appsExtCheck,JB5RunMulti,JB5Run" unless="appsExt.list.present">
+	
+		<mkdir dir="${temp.dir}/out/" />
+	
+		<antcall target="extApk" />
+		
+		<fileset id="item.list" dir="${temp.dir}/out/arm" />
+		<pathconvert refid="item.list" property="apps.ext.list.arm" pathsep="&#10;">
+			<map from="${temp.dir}/out/arm/" to=''/>
+		</pathconvert>
+	
+		<concat destfile="${temp.dir}/appsext.arm.list">&#10;${apps.ext.list.arm}</concat>
+		
+		<fileset id="item.list" dir="${temp.dir}/out/arm64" />
+		<pathconvert refid="item.list" property="apps.ext.list.arm64" pathsep="&#10;">
+			<map from="${temp.dir}/out/arm64/" to=''/>
+		</pathconvert>
+	
+		<concat destfile="${temp.dir}/appsext.arm64.list">&#10;${apps.ext.list.arm64}</concat>
+		
+	</target>
+	
+	<target name="pushList">
+			
+		<property name="apps.ext.list" value="" />	
+		<property name="core.list" value="" />
+		<echo message="${apps.ext.list}" />
+		<copy file="${build.dir}/extras/gapps.sh" tofile="${work.dir}/system/addon.d/80-gapps.sh">
+   	<filterchain>
+     		<replaceregex pattern="(&lt;&lt;EOF).*" replace="\1&#10;${work.list}${core.list}${apps.ext.list}" flags="i"/>
+   	</filterchain>
+   	</copy>
+   	
+	</target>
+	
+</project>
