@@ -1,67 +1,130 @@
 <?xml version="1.0" encoding="ISO-8859-1"?>
 <!DOCTYPE project>
-
-<project name="GappsKitchen" basedir="." default="buildAll">
-	
+<!--=========================================================================-->
+<!--                                                                         -->
+<!--  FILE:     build.xml                                                    -->
+<!--                                                                         -->
+<!--  DESCRIPTION:                                                           -->
+<!--                                                                         -->
+<!--    builds the gapps                                                     -->
+<!--                                                                         -->
+<!--  AUTHORS:                                                               -->
+<!--                                                                         -->
+<!--    tortureduck: Manfred Hofbauer                                        -->
+<!--    dankoman   : Daniel Koman                                            -->
+<!--                                                                         -->
+<!--  Subversion Tags                                                        -->
+<!--                                                                         -->
+<!--    $Author$                                                  -->
+<!--    $LastChangedDate$     -->
+<!--    $LastChangedRevision$                                          -->
+<!--    $LastChangedBy$                                           -->
+<!--    $Id$                -->
+<!--=========================================================================-->
+<project name="buildGapps"
+         default="buildAll"
+         basedir=".">
+  <property file="build.properties"/>
   <description>
-    	This file list used by ant to build the Gapps project
+    This file list used by ant to build the Slim Gapps project
   </description>
-  
-  <property name="build.dir"      	location="build-tools/" />
-  <property name="lib.dir"        	location="${build.dir}/lib/" />
-  
-  <target name="buildAll" depends="init,addons,cleanup" description="execute complete build" />
-  
-  <target name ="init" depends="cleanup" description="initiating steps">
 
-  	<mkdir dir="WORKING" />
-  	<mkdir dir="OUTPUT_ZIP" />
-  	<mkdir dir=".tmp" />
-  	
-  	<propertyfile file=".stats.prop">
-  		<entry key="PRODUCT_VERSION_MAINTENANCE" type="int" default="000" operation="+" pattern="000"/>
-  	</propertyfile>
-	
+  <!--=======================================================================-->
+  <!-- some variables                                                        -->
+  <!--=======================================================================-->
+  <property name="app.name"                     value="buildGapps"/>
+  <property name="app.dir"                      value="${basedir}"/>
+  <property name="work.dir"                     value="${app.dir}/work"/>
+  <property name="build.dir"                    value="${app.dir}/build"/>
+  <property name="structure.dir"                value="${app.dir}/structure"/>
+  <property name="sign.jar"                     value="${app.dir}/tools/signapk.jar"/>
+  <property name="sign.pem"                     value="${app.dir}/tools/testkey.x509.pem"/>
+  <property name="sign.pk8"                     value="${app.dir}/tools/testkey.pk8"/>
+  
+  <tstamp>  
+    <format property="build.today" pattern="yyyyMMdd" />
+  </tstamp>  
+    
+  <!--=======================================================================-->
+  <!-- complete build                                                        -->
+  <!--=======================================================================-->
+  <target name="buildAll"
+        depends="cleanupBefore,initit,buildFull,cleanupAfter"
+          description="execute complete build">
   </target>
-  
-  <target name ="addons" description="create tasks">
-  
-	<echo message="Create tasks" />
-	
-  	<script language="javascript"> <![CDATA[
-  	// importPackage(java.io);
-   	importClass(java.io.File);
-   
-   	var packages = "build-tools" + File.separator + "add-ons";	
-      	
-  	// Create a <fileset dir="" includes=""/>
-  	fs = project.createDataType("fileset");
-  	fs.setDir( new File(basedir, packages) );
-	fs.setIncludes("*-build.xml");
-	
-  	// Get the files (array) of that fileset
-  	ds = fs.getDirectoryScanner(project);
-  	srcFiles = ds.getIncludedFiles();
-  	
-  	// Create a <antcall target="" />
-  	mTask = project.createTask("ant");
-  	
-  	for (i=0; i<srcFiles.length; i++) {
-  		mTask.setAntfile(new File(basedir, packages + File.separator + srcFiles[i]));
-  		mTask.perform();  	
-  	}
 
-  	]]></script>
-  	
+  <!--=======================================================================-->
+  <!-- full                                                               -->
+  <!--=======================================================================-->
+  <target name="buildFull"
+          description="execute full gapps build">
+    <!-- preparations -->
+    <property environment="env"/>
+    <property name="file.name.full" value="${build.dir}/full_gapps.${PRODUCT_VERSION_MAJOR}.${PRODUCT_VERSION_MINOR}.${PRODUCT_VERSION_MAINTENANCE}-${build.today}.zip"/>
+    <delete dir="${work.dir}"/>
+    <propertyfile file="${build.dir}/gapps.filenames">
+      <entry  key="fullfilename" value="${file.name.full}"/>
+    </propertyfile>
+    <!-- copy files -->
+    <copy todir="${work.dir}"><fileset dir="${structure.dir}"/></copy>
+    <copy file="${app.dir}/extras/full/updater-script"  todir="${work.dir}/META-INF/com/google/android"/>
+    <fileset id="item.file" dir="${work.dir}/system" includes="**/*.*" />
+    <pathconvert refid="item.file" property="file.list" pathsep="&#10;">
+    <map from="${work.dir}/system/" to=''/>
+    </pathconvert>
+    <copy file="${app.dir}/extras/full/80-gapps.sh" todir="${work.dir}/system/addon.d">
+    <filterchain>
+      <replaceregex pattern="@file.list@" replace="${file.list}" flags="i"/>
+    </filterchain>
+    </copy>
+    <!-- zip and sign it -->
+    <zip destfile="${build.dir}/unsigned.zip" basedir="${work.dir}"></zip>
+    <echo message="Signing gapps"/>
+    <java dir="${build.dir}" fork="true" failonerror="true" maxmemory="128m" jar="${sign.jar}">
+      <arg value="${sign.pem}"/>
+      <arg value="${sign.pk8}"/>
+      <arg value="${build.dir}/unsigned.zip"/>
+      <arg value="${file.name.full}"/>
+    </java>
   </target>
-  
-  <target name="cleanup" description="delete unnecessary build files">
 
-  	<echo message="Cleaning up"/>
-
-  	<delete dir="WORKING"/>
-  	<delete dir=".tmp"/>
-
+  <!--=======================================================================-->
+  <!-- cleanupBefore new build                                               -->
+  <!--=======================================================================-->
+  <target name="cleanupBefore"
+      description="delete old directories">
+      <delete dir="${build.dir}"/>
+      <delete dir="${work.dir}"/>
   </target>
-  
+
+  <!--=======================================================================-->
+  <!-- cleanupAfter build is done                                            -->
+  <!--=======================================================================-->
+  <target name="cleanupAfter"
+      description="delete unnecessary build files">
+      <echo message="Cleaning up"/>
+      <delete file="${build.dir}/unsigned.zip"/>
+      <delete file="${build.dir}/gapps.filenames"/>
+  </target>
+
+  <!--=======================================================================-->
+  <!-- initiating build                                                      -->
+  <!--=======================================================================-->
+  <target name ="initit"
+      description="initiating-steps">
+      <mkdir dir="${build.dir}"/>
+      <mkdir dir="${work.dir}"/>
+  </target>
+
+  <!--=======================================================================-->
+  <!-- test build                                                            -->
+  <!--=======================================================================-->
+  <target name ="testit"
+      description="testtest">
+      <echo message="${x.dir}"/>
+      <property name="x.dir" value="test9899"/>
+      <echo message="${x.dir}"/>
+  </target>
+    
+    
 </project>

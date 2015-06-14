@@ -1,9 +1,12 @@
 #!/sbin/sh
-
-. /tmp/backuptool.sh
+# 
+# /system/addon.d/70-gapps.sh
+#
+. /tmp/backuptool.functions
 
 list_files() {
 cat <<EOF
+@file.list@
 EOF
 }
 
