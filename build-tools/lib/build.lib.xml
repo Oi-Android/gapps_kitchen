@@ -1,0 +1,110 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!DOCTYPE project>
+
+<!-- include: <import file="${lib.dir}/build.lib.xml" optional="true" /> -->
+
+<project>
+	
+	<tstamp prefix="date"/>
+	<property file="build.config" />
+	
+	<!-- set global properties for build -->
+	<property name="work.dir"          location="WORKING/" />
+	<property name="struct.dir"        location="sources/" />
+	<property name="output.dir"        location="OUTPUT_ZIP/" />
+	<property name="temp.dir"          location=".tmp/" />
+	<property name="apps.dir"          location="applications/" />
+	<property name="gapps.sys.dir"     location="${struct.dir}/GApps/${ARCH}/" />
+	
+	<property file=".stats.prop" />
+	
+  	<!-- cleanupBefore new build  -->
+	<target name="cleanup" description="delete worked directories">
+	
+	  	<echo message="Cleaning up"/>
+		<delete dir="${work.dir}"/>
+		
+ 	</target>
+	
+	<target name="init" description="create worked directories">
+	
+		<echo message="create WORKING folder" />
+		<mkdir dir="${work.dir}" />
+		<echo message="add META-INF folder" />
+		<copy todir="${work.dir}/">
+			<fileset dir="${build.dir}/extras/">
+				<include name="META-INF/**" />
+				<include name="install/**" />
+				<include name="installer.data" />
+			</fileset>
+		</copy>
+		
+	</target>
+	
+  	<!-- create etc/g.prop -->
+  	<target name="crtGprop">	
+  		
+  		<propertyfile file="${work.dir}/system/etc/g.prop">
+  			<entry key="ro.addon.type" value="gapps"/>
+  			<entry key="ro.addon.platform" value="lp"/>
+      	<entry key="ro.addon.version" value="gapps-lp-${date.DSTAMP}"/>
+      	<entry key="ro.addon.minimumversion" value="${PRODUCT_VERSION_MAJOR}"/>
+		</propertyfile>
+  		
+  	</target>
+	
+	<!-- check if there is enough space -->
+	<target name="spaceCheck">
+		
+		<length property="length.gapps">
+       <fileset dir="${work.dir}"/>
+    	</length>
+    	
+    	<propertyfile file="${work.dir}/installer.data">
+  			<entry key="gapps_size" value="${length.gapps}"/>
+  		</propertyfile>
+  		
+	</target>
+	
+	<!-- modification of the updater-script -->
+	<target name="comment">
+		<property name="opt.cm" value=""/>
+		<replace file="${work.dir}/META-INF/com/google/android/updater-script">
+	    <replacefilter token="#optional-commit" value="${opt.cm}"/>
+	  </replace>
+	</target>  
+	  
+	<!-- add plugins -->
+	<target name="addPlugins" description="initialization *plugins-prebuild.xml">
+
+		<echo message="plugins: ON"/>
+		
+		<script language="javascript"> <![CDATA[
+	  	// importPackage(java.io);
+	   	importClass(java.io.File);
+	   
+	  	var addons = "build-tools" + File.separator + "add-ons";	
+	      	
+	  	// Create a <fileset dir="" includes=""/>
+	  	fs = project.createDataType("fileset");
+	  	fs.setDir( new File(basedir, addons) );
+		fs.setIncludes("*-prebuild.xml");
+		
+	  	// Get the files (array) of that fileset
+	  	ds = fs.getDirectoryScanner(project);
+	  	srcFiles = ds.getIncludedFiles();
+	  	
+	  	// Create a <antcall target="" />
+	  	mTask = project.createTask("ant");
+	  	
+	  	for (i=0; i<srcFiles.length; i++) {
+	  		mTask.setAntfile(new File(basedir, addons + File.separator + srcFiles[i]));
+	  		mTask.perform();  	
+	  	}
+	
+	  	]]></script>
+
+	</target>
+	
+</project>
+  	
