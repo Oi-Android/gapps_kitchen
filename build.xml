@@ -4,7 +4,7 @@
 <project name="GappsKitchen" basedir="." default="buildAll">
 	
   <description>
-    This file list used by ant to build the Gapps project
+    	This file list used by ant to build the Gapps project
   </description>
   
   <property name="build.dir"      	location="build-tools/" />
@@ -30,9 +30,9 @@
 	
   	<script language="javascript"> <![CDATA[
   	// importPackage(java.io);
-   importClass(java.io.File);
+   	importClass(java.io.File);
    
-   var packages = "build-tools" + File.separator + "add-ons";	
+   	var packages = "build-tools" + File.separator + "add-ons";	
       	
   	// Create a <fileset dir="" includes=""/>
   	fs = project.createDataType("fileset");
