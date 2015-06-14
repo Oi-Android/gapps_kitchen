@@ -40,15 +40,15 @@
 			<map from="${struct.dir}/Core/" to=''/>
 		</pathconvert>
 		
-		<concat destfile="${temp.dir}/core.list">&#10;${core.list}</concat>
+		<concat destfile="${temp.dir}/core.list">${core.list}&#10;</concat>
 	
 	</target>
 		
-	<target name="appsExtCheck">
+	<target name="appsExtCheck" if="${UNZIPAPK}">
 		<property name="file.appsExt.list" value="${temp.dir}/out/"/>
 		<available file="${file.appsExt.list}" type="dir" property="appsExt.list.present"/>
-		
-		<condition property="isConfigJB5">
+      
+      <condition property="isConfigJB5">
    		<and>
          	<equals arg1="${ARCH}" arg2="arm64"/>
          	<istrue value="${apps.ext.multi-}"/>
@@ -57,7 +57,7 @@
       
 	</target>
 	
-	<target name="JB5RunMulti" if="isConfigJB5">
+	<target name="JB5RunMulti" if="isConfigJB5,appsExt.list.present">
 	
 		<copy todir="${work.dir}/system/">
 			<fileset dir="${temp.dir}/out/arm" />
@@ -69,16 +69,16 @@
 		
 	</target>
 
-	<target name="JB5Run" unless="isConfigJB5">
+	<target name="JB5Run" unless="isConfigJB5" if="appsExt.list.present">
 	
 		<copy todir="${work.dir}/system/">
 			<fileset dir="${temp.dir}/out/${ARCH}" />
 		</copy>	
 		<loadresource property="apps.ext.list"> <file file="${temp.dir}/appsext.${ARCH}.list" /> </loadresource>	
 		
-	</target>
+	</target>	
 	
-	<target name="addExtApps" depends="appsExtCheck,JB5RunMulti,JB5Run" unless="appsExt.list.present">
+	<target name="addExtApps" depends="appsExtCheck" unless="appsExt.list.present">
 	
 		<mkdir dir="${temp.dir}/out/" />
 	
@@ -89,27 +89,28 @@
 			<map from="${temp.dir}/out/arm/" to=''/>
 		</pathconvert>
 	
-		<concat destfile="${temp.dir}/appsext.arm.list">&#10;${apps.ext.list.arm}</concat>
+		<concat destfile="${temp.dir}/appsext.arm.list">${apps.ext.list.arm}&#10;</concat>
 		
 		<fileset id="item.list" dir="${temp.dir}/out/arm64" />
 		<pathconvert refid="item.list" property="apps.ext.list.arm64" pathsep="&#10;">
 			<map from="${temp.dir}/out/arm64/" to=''/>
 		</pathconvert>
 	
-		<concat destfile="${temp.dir}/appsext.arm64.list">&#10;${apps.ext.list.arm64}</concat>
+		<concat destfile="${temp.dir}/appsext.arm64.list">${apps.ext.list.arm64}&#10;</concat>
 		
 	</target>
 	
-	<target name="pushList">
+	<target name="pushList" depends="JB5RunMulti,JB5Run">
 			
 		<property name="apps.ext.list" value="" />	
 		<property name="core.list" value="" />
-		<echo message="${apps.ext.list}" />
+		<property name="work.list" value="" />
+		<echo message="${core.list}${apps.ext.list}${work.list}" />
 		<copy file="${build.dir}/extras/gapps.sh" tofile="${work.dir}/system/addon.d/80-gapps.sh">
-   	<filterchain>
-     		<replaceregex pattern="(&lt;&lt;EOF).*" replace="\1&#10;${work.list}${core.list}${apps.ext.list}" flags="i"/>
-   	</filterchain>
-   	</copy>
+   		<filterchain>
+     			<replaceregex pattern="(&lt;&lt;EOF).*" replace="\1&#10;${core.list}${apps.ext.list}${work.list}" flags="i"/>
+   		</filterchain>
+   		</copy>
    	
 	</target>
 	
