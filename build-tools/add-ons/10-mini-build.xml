@@ -14,17 +14,17 @@
    
 	<!-- copy files -->
 	<copy todir="${work.dir}/system/">
-       <fileset id="item.file" dir="${gapps.sys.dir}">
-       	<include name="app/**" />
+       	<fileset id="item.file" dir="${gapps.sys.dir}">
+       	 <include name="app/**" />
          <include name="priv-app/**" />
-       </fileset>
-   </copy> 
+       	</fileset>
+   	</copy> 
 	
 	<pathconvert refid="item.file" property="work.list" pathsep="&#10;">
-    <map from="${gapps.sys.dir}/" to=''/>
-   </pathconvert>
+    	<map from="${gapps.sys.dir}/" to=''/>
+   	</pathconvert>
    
-   <antcall target="std.crtGprop" />
+  	<antcall target="std.crtGprop" />
    
 	<antcall target="lfs.pushList"/>
 	
