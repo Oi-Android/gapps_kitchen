@@ -46,11 +46,23 @@ abort() {
     quit $1;
 }
 
+begin() {
+    ui_print " ";
+    ui_print "- Mounting systems";
+    ui_print " ";
+    busybox mount /system;
+    busybox mount /data;
+	 busybox mount /cache;
+    busybox mount -o rw,remount /system;
+}
+
 quit() {
     rm -rf /tmp/*;
     ui_print " ";
     ui_print "- Unmounting systems";
     ui_print " ";
     umount /system;
+    umount /data;
+    umount /cache;
     exit $1;
 }
