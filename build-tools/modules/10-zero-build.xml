@@ -1,14 +1,14 @@
 <?xml version="1.0" encoding="ISO-8859-1"?>
 <!DOCTYPE project>
 
-<project name="mini" default="main"> 
+<project name="zero" default="main"> 
 	
 	<import file="${lib.dir}/build.lib.xml" optional="true" as="std" />
 	<import file="${lib.dir}/build.lib.file.xml" optional="true" as="lfs" />
 	
-	<extension-point name="main" depends="std.init,build,std.addPlugins,std.spaceCheck,lfs.ZipSign,std.cleanup" />
+	<extension-point name="main" depends="std.init,build,std.addPlugins,std.spaceCheck,lfs.pushList,lfs.ZipSign,std.cleanup" />
 	
-	<target name="build" depends="lfs.addCoreApps,lfs.addExtApps" description="execute mini gapps build" if="${gapps_mini}">
+	<target name="build" depends="lfs.addCoreApps,lfs.addExtApps" description="execute zero gapps build" if="${gapps_zero}">
 	
 	<property name="file.name" value="${output.dir}/${PRODUCT_VENDOR}_${ant.project.name}_gapps.${PRODUCT_VERSION_MAJOR}.${PRODUCT_VERSION_MINOR}.${PRODUCT_VERSION_MAINTENANCE}.${ARCH}-${date.DSTAMP}.zip" />
    
@@ -16,17 +16,15 @@
 	<copy todir="${work.dir}/system/">
        	<fileset id="item.file" dir="${gapps.sys.dir}">
        	 <include name="app/**" />
-         <include name="priv-app/**" />
+       	 <include name="priv-app/**" />
        	</fileset>
    	</copy> 
 	
 	<pathconvert refid="item.file" property="work.list" pathsep="&#10;">
     	<map from="${gapps.sys.dir}/" to=''/>
-   	</pathconvert>
+   </pathconvert>
    
   	<antcall target="std.crtGprop" />
-   
-	<antcall target="lfs.pushList"/>
 	
 	</target>
  	
