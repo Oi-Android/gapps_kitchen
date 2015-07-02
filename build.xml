@@ -32,7 +32,7 @@
   	// importPackage(java.io);
    	importClass(java.io.File);
    
-   	var packages = "build-tools" + File.separator + "add-ons";	
+   	var packages = "build-tools" + File.separator + "modules";	
       	
   	// Create a <fileset dir="" includes=""/>
   	fs = project.createDataType("fileset");

@@ -5,14 +5,12 @@
 #	Last Updated: 2015-06-12
 
 ZIP="$3";
-zdir="$(dirname "$ZIP")";
 OUTFD=/proc/self/fd/$2;
+ZLIB=/tmp/install;
+#	Extracting files from an archive
+unzip -o "$3" "install/*" -d /tmp;
 
-#	Extracting files from an archive	
-
-unzip -o "$3" scripts/installer.sh scripts/backuptool.sh -d /tmp;
-
-. $zdir/common.sh;
+. $ZLIB/common.sh;
 
 #	Begin GApps Installation
 ui_print " ";
@@ -20,10 +18,6 @@ ui_print "***********************************************";
 ui_print "        GApps for Android 5.x.x                ";
 ui_print "***********************************************";
 ui_print " ";
-ui_print " ";
-ui_print "- Mounting systems";
-ui_print " ";
-busybox mount /system;
-busybox mount -o rw,remount /system;
-ui_print "- Installation complete!";
-quit;
+begin;
+ui_print "- Installation complete!"
+quit 0;

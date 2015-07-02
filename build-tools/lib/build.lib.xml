@@ -83,7 +83,7 @@
 	  	// importPackage(java.io);
 	   	importClass(java.io.File);
 	   
-	  	var addons = "build-tools" + File.separator + "add-ons";	
+	  	var addons = "build-tools" + File.separator + "plugins";	
 	      	
 	  	// Create a <fileset dir="" includes=""/>
 	  	fs = project.createDataType("fileset");
